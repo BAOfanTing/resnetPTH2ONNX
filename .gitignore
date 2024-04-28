@@ -153,3 +153,4 @@ dmypy.json
 *.pth
 *.onnx
 *.txt
+*.jpg

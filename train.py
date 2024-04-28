@@ -7,7 +7,7 @@ import torch.optim as optim
 from torchvision import transforms, datasets
 from tqdm import tqdm
 
-from model import resnet34
+from model import resnet34,resnet50
 from PIL import Image
 from torch.utils.data import Dataset
 
@@ -71,16 +71,18 @@ def main():
     print("using {} device.".format(device))
 
     data_transform = {
-        "train": transforms.Compose([transforms.RandomResizedCrop(224),
+        "train": transforms.Compose([transforms.RandomResizedCrop(448),
                                      transforms.RandomHorizontalFlip(),
                                      transforms.ToTensor(),
                                      transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]),
-        "val": transforms.Compose([transforms.Resize(256),
-                                   transforms.CenterCrop(224),
+                                     #transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+                                
+        "val": transforms.Compose([transforms.Resize(500),
+                                   transforms.CenterCrop(448),
                                    transforms.ToTensor(),
                                    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])}
 
-    batch_size = 128
+    batch_size = 16
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])  # number of workers
     print('Using {} dataloader workers every process'.format(nw))
 
@@ -99,10 +101,10 @@ def main():
                                                 num_workers=nw)
     
 
-    net = resnet34()
+    net = resnet50()
     # load pretrain weights
     # download url: https://download.pytorch.org/models/resnet34-333f7ec4.pth
-    model_weight_path = "./resnet34-pre.pth"
+    model_weight_path = "./resnet50-pre.pth"
     assert os.path.exists(model_weight_path), "file {} does not exist.".format(model_weight_path)
     net.load_state_dict(torch.load(model_weight_path, map_location='cpu'))
     # for param in net.parameters():
@@ -110,7 +112,7 @@ def main():
 
     # change fc layer structure
     in_channel = net.fc.in_features
-    net.fc = nn.Linear(in_channel, 14)
+    net.fc = nn.Linear(in_channel, 255)
     net.to(device)
 
     # define loss function
@@ -122,7 +124,7 @@ def main():
 
     epochs = 100
     best_acc = 0.0
-    save_path = './resNet34-bird.pth'
+    save_path = './resNet50-bird.pth'
     train_steps = len(train_loader)
     for epoch in range(epochs):
         # train
